@@ -23,6 +23,7 @@ setup(
             'talker_bb = pubsub.pub_bb:main',
             'talker_pc = pubsub.pub_pc:main',
             'listener = pubsub.sub_function:main',
+            'pc2img = pubsub.pc2img:main',
         ],
     },
 )

@@ -9,6 +9,14 @@
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>aiim_autoware_msgs</exec_depend>
+  <exec_depend>numpy</exec_depend>
+  <exec_depend>open3d</exec_depend>
+  <exec_depend>sys</exec_depend>
+  <exec_depend>math</exec_depend>
+  <exec_depend>struct</exec_depend>
+
+
+
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
