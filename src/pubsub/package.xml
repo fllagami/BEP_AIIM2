@@ -14,6 +14,11 @@
   <exec_depend>sys</exec_depend>
   <exec_depend>math</exec_depend>
   <exec_depend>struct</exec_depend>
+  <exec_depend>bb2img</exec_depend>
+  <exec_depend>li2img</exec_depend>
+  <exec_depend>matrixli2img</exec_depend>
+
+
 
 
 
