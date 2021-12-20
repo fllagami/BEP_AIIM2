@@ -173,26 +173,26 @@ def make_pic_mat(pcl2, viewer_pos=(0,0), viewer_height=1.7, sensing_range=80, sc
                     int(midpoint[1] - size_final[1] / 2):
                     int(midpoint[1] + size_final[1] / 2)]
         # eagle_obs = eagle_obs[::scale, ::scale]
-        # cv.imshow('lidar scale={}'.format(scale), eagle_obs)
+        cv.imshow('lidar scale={}'.format(scale), eagle_obs)
         # cv.imwrite(os.path.join(path, 'observability_84x84.jpg'), eagle_obs)
 
         occlusions = occlusions[int(midpoint[0] - size_final[0]): int(midpoint[0]),
                     int(midpoint[1] - size_final[1] / 2):
                     int(midpoint[1] + size_final[1] / 2)]
-        # cv.imshow('occlusions scale={}'.format(scale), occlusions)
+        cv.imshow('occlusions scale={}'.format(scale), occlusions)
         # cv.imwrite(os.path.join(path, 'occlusions_84x84.jpg'), occlusions)
-        # occlusions_altered = np.where(occlusions != 0, np.uint8(255), occlusions)
+        occlusions_altered = np.where(occlusions != 0, np.uint8(255), occlusions)
         # cv.imwrite(os.path.join(path, 'occlusions_altered_84x84.jpg'), occlusions_altered)
         #
-        # eagle_all_with_angles = eagle_all_with_angles[int(midpoint[0] - size_final[0]): int(midpoint[0]),
-        #                         int(midpoint[1] - size_final[1] / 2):
-        #                         int(midpoint[1] + size_final[1] / 2)]
-        # eagle_all_with_angles = cv.resize(eagle_all_with_angles, (500, 500), interpolation=cv.INTER_LINEAR)
-        # cv.imshow('lidar big scale={}'.format(scale), eagle_all_with_angles)
+        eagle_all_with_angles = eagle_all_with_angles[int(midpoint[0] - size_final[0]): int(midpoint[0]),
+                                int(midpoint[1] - size_final[1] / 2):
+                                int(midpoint[1] + size_final[1] / 2)]
+        eagle_all_with_angles = cv.resize(eagle_all_with_angles, (500, 500), interpolation=cv.INTER_LINEAR)
+        cv.imshow('lidar big scale={}'.format(scale), eagle_all_with_angles)
         # cv.imwrite(os.path.join(path, 'observability_enlarged.jpg'), eagle_all_with_angles)
         # save_img(eagle_all_with_angles, 'observability and occlusions with angles and no shift')
 
-        # cv.waitKey(0)
+        cv.waitKey(10)
 
     return bridge.cv2_to_imgmsg(eagle_obs, encoding='mono8'), bridge.cv2_to_imgmsg(eagle_all_with_angles, encoding='bgr8')
 
