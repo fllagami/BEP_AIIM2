@@ -6,7 +6,7 @@ import cv2 as cv
 
 class ImageSubscriber(Node):
     def __init__(self):
-        super().__init__('subscriber')
+        super().__init__('imaga_subscriber')
         self.image_subscription = self.create_subscription(
             Image,
             # 'observability_matrix',

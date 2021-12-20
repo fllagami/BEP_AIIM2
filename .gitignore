@@ -2,3 +2,5 @@
 /install/
 /log/
 /bags/
+/src/pubsub/pubsub/matrixli2img_old.py
+/src/pubsub/pubsub/rsli_sub_old.py

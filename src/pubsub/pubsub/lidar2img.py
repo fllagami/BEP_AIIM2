@@ -18,17 +18,15 @@ _DATATYPES[PointField.UINT32] = ('I', 4)
 _DATATYPES[PointField.FLOAT32] = ('f', 4)
 _DATATYPES[PointField.FLOAT64] = ('d', 8)
 
-# show obs in rviz2
-# make vid of it
-
 WHITE = np.array((255, 255, 255), np.uint8)
 RED = np.array((0, 0, 255), np.uint8)
 BLACK = np.array((0, 0, 0), np.uint8)
 GREEN = np.array((0, 255, 0), np.uint8)
 BLUE = np.array((255, 0, 0), np.uint8)
 
-def make_pic_mat(pcl2, viewer_pos=(0,0), viewer_height=1.7, sensing_range=80, scale=0.5,
-                   visibility_ang=np.pi*2/3, size_final=(84,84), shift=True):
+
+def make_obs_lidar(pcl2, viewer_pos=(0, 0), viewer_height=1.7, sensing_range=80, scale=0.5,
+                 visibility_ang=np.pi * 2 / 3, size_final=(84, 84), shift=True):
     """
         @param pcl2: Pointcloud2 to read from.
         @param viewer_pos: Position of viewer in meters.
@@ -44,14 +42,14 @@ def make_pic_mat(pcl2, viewer_pos=(0,0), viewer_height=1.7, sensing_range=80, sc
     bridge = CvBridge()
 
     if scale >= 1:
-        axis = int((size_final[0]//sensing_range + 2) * sensing_range * scale)
+        axis = int((size_final[0] // sensing_range + 2) * sensing_range * scale)
 
-        occlusions = np.zeros((axis, axis*2), dtype=np.uint8)  # (height, width), only observability
+        occlusions = np.zeros((axis, axis * 2), dtype=np.uint8)  # (height, width), only observability
 
         for p in read_points(pcl2, ['x', 'y', 'z'], skip_nans=True):
             # scale is 1 meter per pixel
-            if abs(int(p[0])) < sensing_range+viewer_pos[0] \
-                    and abs(int(p[1])) < sensing_range+viewer_pos[1] \
+            if abs(int(p[0])) < sensing_range + viewer_pos[0] \
+                    and abs(int(p[1])) < sensing_range + viewer_pos[1] \
                     and p[2] >= viewer_height:
                 # point_width, point_height = map_points(p, scale) # conversion of point coordinates to px
                 occlusions[(int(p[0]) - axis) * -1,
@@ -71,13 +69,13 @@ def make_pic_mat(pcl2, viewer_pos=(0,0), viewer_height=1.7, sensing_range=80, sc
         if visibility_ang is not None:
             angle = (np.pi - visibility_ang) / 2
             for w in range(1, viewer_pos[1], 1):
-                position_mask[viewer_pos[0] - round(np.tan(angle) * w) : viewer_pos[0], viewer_pos[1] - w] = True
-            for w in range(1, axis*2 - viewer_pos[1], 1):
-                position_mask[viewer_pos[0] - round(np.tan(angle) * w) : viewer_pos[0], viewer_pos[1] + w] = True
+                position_mask[viewer_pos[0] - int(round(np.tan(angle) * w)): viewer_pos[0], viewer_pos[1] - w] = True
+            for w in range(1, axis * 2 - viewer_pos[1], 1):
+                position_mask[viewer_pos[0] - int(round(np.tan(angle) * w)): viewer_pos[0], viewer_pos[1] + w] = True
 
         # color occlusions and observability map
         eagle_all = np.where(observability[..., None], WHITE, BLACK)
-        eagle_all[viewer_pos[0]-2 : viewer_pos[0], viewer_pos[1]-1 : viewer_pos[1]+1] = GREEN
+        eagle_all[viewer_pos[0] - 2: viewer_pos[0], viewer_pos[1] - 1: viewer_pos[1] + 1] = GREEN
         eagle_all = np.where((occlusions == 0)[..., None], eagle_all, RED)
 
         eagle_all_with_angles = np.where(position_mask[..., None], BLACK, eagle_all)
@@ -91,8 +89,8 @@ def make_pic_mat(pcl2, viewer_pos=(0,0), viewer_height=1.7, sensing_range=80, sc
             midpoint = viewer_pos
         else:
             midpoint = (axis, axis)
-        eagle_obs = eagle_obs[int(midpoint[0] - size_final[0]*scale) : int(midpoint[0]),
-                          int(midpoint[1] - size_final[1]*scale/2) : int(midpoint[1] + size_final[1]*scale/2)]
+        eagle_obs = eagle_obs[int(midpoint[0] - size_final[0] * scale): int(midpoint[0]),
+                    int(midpoint[1] - size_final[1] * scale / 2): int(midpoint[1] + size_final[1] * scale / 2)]
         eagle_obs = eagle_obs[::scale, ::scale]
         # cv.imshow('observability 84x84', eagle_obs)
         # save_img(eagle_obs, 'observability 84x84, with no shift')
@@ -108,22 +106,25 @@ def make_pic_mat(pcl2, viewer_pos=(0,0), viewer_height=1.7, sensing_range=80, sc
         # save_img(eagle_all, 'observability and occlusions with no shift')
 
         eagle_all_with_angles = eagle_all_with_angles[int(midpoint[0] - size_final[0] * scale): int(midpoint[0]),
-                    int(midpoint[1] - size_final[1] * scale / 2): int(midpoint[1] + size_final[1] * scale / 2)]
+                                int(midpoint[1] - size_final[1] * scale / 2): int(
+                                    midpoint[1] + size_final[1] * scale / 2)]
         eagle_all_with_angles = cv.resize(eagle_all_with_angles, (500, 500), interpolation=cv.INTER_LINEAR)
         # cv.imshow('observability and occlusions with angles and no shift', eagle_all_with_angles)
         # save_img(eagle_all_with_angles, 'observability and occlusions with angles and no shift')
 
         # cv.waitKey(50)
+        return bridge.cv2_to_imgmsg(eagle_obs, encoding='mono8'), bridge.cv2_to_imgmsg(eagle_all_with_angles,
+                                                                                       encoding='bgr8')
     else:
-        scale_multiplier = int(1/scale)
+        scale_multiplier = int(1 / scale)
         axis = int((size_final[0] // sensing_range + 2) * sensing_range * scale * scale_multiplier)
 
         occlusions = np.zeros((axis, axis * 2), dtype=np.uint8)  # (height, width), only observability
 
         for p in read_points(pcl2, ['x', 'y', 'z'], skip_nans=True):
             # scale is 1 meter per pixel
-            if abs(int(p[0])) < ((sensing_range + viewer_pos[0])//scale_multiplier) \
-                    and abs(int(p[1])) < ((sensing_range + viewer_pos[1])//scale_multiplier) \
+            if abs(int(p[0])) < ((sensing_range + viewer_pos[0]) // scale_multiplier) \
+                    and abs(int(p[1])) < ((sensing_range + viewer_pos[1]) // scale_multiplier) \
                     and p[2] >= viewer_height:
                 occlusions[(int(p[0] * scale_multiplier) - axis) * -1,
                            (int(p[1] * scale_multiplier) - axis) * -1] = p[2]
@@ -131,7 +132,7 @@ def make_pic_mat(pcl2, viewer_pos=(0,0), viewer_height=1.7, sensing_range=80, sc
         if viewer_pos is None:
             viewer_pos = (axis, axis)
         else:
-            viewer_pos = (axis - viewer_pos[0] * scale_multiplier, axis - viewer_pos[1] * scale_multiplier)
+            viewer_pos = (int(axis - viewer_pos[0] * scale_multiplier), int(axis - viewer_pos[1] * scale_multiplier))
 
         # make observability mask
         observability = view_field(occlusions, viewer_pos, sensing_range * scale_multiplier)
@@ -143,9 +144,9 @@ def make_pic_mat(pcl2, viewer_pos=(0,0), viewer_height=1.7, sensing_range=80, sc
         if visibility_ang is not None:
             angle = (np.pi - visibility_ang) / 2
             for w in range(1, viewer_pos[1], 1):
-                position_mask[viewer_pos[0] - round(np.tan(angle) * w): viewer_pos[0], viewer_pos[1] - w] = True
+                position_mask[viewer_pos[0] - int(round(np.tan(angle) * w)): viewer_pos[0], viewer_pos[1] - w] = True
             for w in range(1, axis * 2 - viewer_pos[1], 1):
-                position_mask[viewer_pos[0] - round(np.tan(angle) * w): viewer_pos[0], viewer_pos[1] + w] = True
+                position_mask[viewer_pos[0] - int(round(np.tan(angle) * w)): viewer_pos[0], viewer_pos[1] + w] = True
 
         # color occlusions and observability map
         eagle_all = np.where(observability[..., None], WHITE, BLACK)
@@ -173,28 +174,29 @@ def make_pic_mat(pcl2, viewer_pos=(0,0), viewer_height=1.7, sensing_range=80, sc
                     int(midpoint[1] - size_final[1] / 2):
                     int(midpoint[1] + size_final[1] / 2)]
         # eagle_obs = eagle_obs[::scale, ::scale]
-        # cv.imshow('lidar scale={}'.format(scale), eagle_obs)
+        cv.imshow('lidar scale={}'.format(scale), eagle_obs)
         # cv.imwrite(os.path.join(path, 'observability_84x84.jpg'), eagle_obs)
 
         occlusions = occlusions[int(midpoint[0] - size_final[0]): int(midpoint[0]),
-                    int(midpoint[1] - size_final[1] / 2):
-                    int(midpoint[1] + size_final[1] / 2)]
-        # cv.imshow('occlusions scale={}'.format(scale), occlusions)
+                     int(midpoint[1] - size_final[1] / 2):
+                     int(midpoint[1] + size_final[1] / 2)]
+        cv.imshow('occlusions scale={}'.format(scale), occlusions)
         # cv.imwrite(os.path.join(path, 'occlusions_84x84.jpg'), occlusions)
         # occlusions_altered = np.where(occlusions != 0, np.uint8(255), occlusions)
         # cv.imwrite(os.path.join(path, 'occlusions_altered_84x84.jpg'), occlusions_altered)
         #
-        # eagle_all_with_angles = eagle_all_with_angles[int(midpoint[0] - size_final[0]): int(midpoint[0]),
-        #                         int(midpoint[1] - size_final[1] / 2):
-        #                         int(midpoint[1] + size_final[1] / 2)]
-        # eagle_all_with_angles = cv.resize(eagle_all_with_angles, (500, 500), interpolation=cv.INTER_LINEAR)
-        # cv.imshow('lidar big scale={}'.format(scale), eagle_all_with_angles)
+        eagle_all_with_angles = eagle_all_with_angles[int(midpoint[0] - size_final[0]): int(midpoint[0]),
+                                int(midpoint[1] - size_final[1] / 2):
+                                int(midpoint[1] + size_final[1] / 2)]
+        eagle_all_with_angles = cv.resize(eagle_all_with_angles, (500, 500), interpolation=cv.INTER_LINEAR)
+        cv.imshow('lidar big scale={}'.format(scale), eagle_all_with_angles)
         # cv.imwrite(os.path.join(path, 'observability_enlarged.jpg'), eagle_all_with_angles)
         # save_img(eagle_all_with_angles, 'observability and occlusions with angles and no shift')
 
-        # cv.waitKey(0)
-
-    return bridge.cv2_to_imgmsg(eagle_obs, encoding='mono8'), bridge.cv2_to_imgmsg(eagle_all_with_angles, encoding='bgr8')
+        cv.waitKey(10)
+        return bridge.cv2_to_imgmsg(eagle_obs, encoding='mono8'), \
+               bridge.cv2_to_imgmsg(occlusions, encoding='mono8'), \
+               bridge.cv2_to_imgmsg(eagle_all_with_angles, encoding='bgr8')
 
 
 def save_img(img, name, counter=None):
@@ -242,7 +244,7 @@ def read_points(cloud, field_names=None, skip_nans=False, uvs=[]):
     # assert isinstance(cloud,
     # roslib.message.Message) and cloud._type == 'sensor_msgs/PointCloud2', 'cloud is not a sensor_msgs.msg.PointCloud2'
     fmt = _get_struct_fmt(cloud.is_bigendian, cloud.fields, field_names)
-    width, height, point_step, row_step, data, isnan = cloud.width, cloud.height, cloud.point_step, cloud.row_step,\
+    width, height, point_step, row_step, data, isnan = cloud.width, cloud.height, cloud.point_step, cloud.row_step, \
                                                        cloud.data, math.isnan
     unpack_from = struct.Struct(fmt).unpack_from
 
@@ -297,7 +299,7 @@ def view_field(height_map, viewer_pos, max_distance=100, resolution=50):  # assu
 
     # Find angle range "behind" each pixel
     pix_size = 0
-    ad = np.arccos(d / np.sqrt(d2 + np.square(pix_size)+0.001))
+    ad = np.arccos(d / np.sqrt(d2 + np.square(pix_size) + 0.001))
     # Minimum and maximum angle encompassed by each pixel
     amin = a - ad
     amax = a + ad
@@ -321,10 +323,10 @@ def downsample(ar, fact=10):
     print(fact)
     sx, sy = ar.shape
     x, y = np.ogrid[0:sx, 0:sy]
-    regions = sy/fact * (x/fact) + y/fact
+    regions = sy / fact * (x / fact) + y / fact
     res = ndimage.mean(ar, labels=regions, index=np.arange(regions.max() + 1))
-    print(sx/fact)
-    res.shape = (np.uint8(sx/fact), np.uint8(sy/fact))
+    print(sx / fact)
+    res.shape = (np.uint8(sx / fact), np.uint8(sy / fact))
     return res
 
 # def lidar():
@@ -368,3 +370,4 @@ def downsample(ar, fact=10):
 
 # lpoints = json.load(open("/home/fjord/bep2/lpoints.json"))
 # make_pic(lpoints)
+
