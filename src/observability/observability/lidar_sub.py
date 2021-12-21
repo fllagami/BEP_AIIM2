@@ -1,16 +1,17 @@
 import rclpy
 from rclpy.node import Node
-from pubsub.lidar2img import make_obs_lidar
+from observability.lidar2img import make_obs_lidar
 from aiim_autoware_msgs.msg import VehicleKinematicState
 from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import Image
 from std_msgs.msg import Float64
 from datetime import datetime
-from sensor_msgs.msg import Image
 
 
 class LidarSubscriber(Node):
     img_counter = 0
     viewer_position = (0, 0)
+    longitudinal_velocity = 0.0
 
     def __init__(self):
         super().__init__('lidar_observability')
@@ -28,29 +29,29 @@ class LidarSubscriber(Node):
             1)
         self.state_subscription  # prevent unused variable warning
 
-        self.obs_pub = self.create_publisher(Image, 'observability_matrix', 1)
-        self.obs_pub = self.create_publisher(Image, 'occlusions_matrix', 1)
-        self.rviz2_image_pub = self.create_publisher(Image, 'observability_big_image', 10)
+        self.observability_pub = self.create_publisher(Image, 'li_observability_matrix', 1)
+        self.occlusions_pub = self.create_publisher(Image, 'li_occlusions_matrix', 1)
+        self.inclusive_image_pub = self.create_publisher(Image, 'li_observability_detailed_image', 10)
         self.ai_result = self.create_publisher(Float64, 'ai_result', 1)
 
     def lidar_callback(self, pcl2):
         start = datetime.now()
 
-        observability = make_obs_lidar(pcl2, viewer_pos=self.viewer_position, scale=0.5)
+        estimations = make_obs_lidar(pcl2, viewer_pos=self.viewer_position, scale=0.5)
 
-        obs_matrix = observability[0]
-        occlusions = observability[1]
-        big_image = observability[2]
+        observability = estimations[0]
+        occlusions = estimations[1]
+        inclusive_image = estimations[2]
         self.img_counter += 1
 
-        self.obs_pub.publish(obs_matrix)
-        self.get_logger().info('Publishing: Observability matrix {}'.format(self.img_counter))
+        self.observability_pub.publish(observability)
+        self.get_logger().info('Publishing: Lidar Observability matrix {}'.format(self.img_counter))
 
-        self.rviz2_image_pub.publish(big_image)
-        self.get_logger().info('Publishing: Rviz2 Image {}'.format(self.img_counter))
+        self.occlusions_pub.publish(occlusions)
+        self.get_logger().info('Publishing: Lidar Occlusions matrix {}'.format(self.img_counter))
 
-        self.obs_pub.publish(occlusions)
-        self.get_logger().info('Publishing: Occlusions matrix {}'.format(self.img_counter))
+        self.inclusive_image_pub.publish(inclusive_image)
+        self.get_logger().info('Publishing: Lidar Detailed observability image {}'.format(self.img_counter))
 
         # call ai
         # self.ai_result.publish(ai_result)
@@ -60,7 +61,10 @@ class LidarSubscriber(Node):
         print('time elapsed = {}.{}'.format(time_elapsed.seconds, time_elapsed.microseconds * 1000))
 
     def vehicle_state_update(self, msg):
-        viewer_position = (int(msg.state.x), int(msg.state.y))
+        self.viewer_position = (int(msg.state.x), int(msg.state.y))
+        self.longitudinal_velocity = msg.state.longitudinal_velocity_mps
+        print('viewer_position = {}, longitudinal_velocity = {}'.format(self.viewer_position, self.longitudinal_velocity))
+
 
 def main(args=None):
     rclpy.init(args=args)

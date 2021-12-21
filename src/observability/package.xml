@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>pubsub</name>
+  <name>observability</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
   <maintainer email="fjord@todo.todo">fjord</maintainer>
@@ -9,14 +9,14 @@
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>aiim_autoware_msgs</exec_depend>
-  <exec_depend>numpy</exec_depend>
-  <exec_depend>open3d</exec_depend>
-  <exec_depend>sys</exec_depend>
-  <exec_depend>math</exec_depend>
-  <exec_depend>struct</exec_depend>
-  <exec_depend>bb2img</exec_depend>
-  <exec_depend>li2img</exec_depend>
-  <exec_depend>matrixli2img</exec_depend>
+<!--  <exec_depend>numpy</exec_depend>-->
+<!--  <exec_depend>open3d</exec_depend>-->
+<!--  <exec_depend>sys</exec_depend>-->
+<!--  <exec_depend>math</exec_depend>-->
+<!--  <exec_depend>struct</exec_depend>-->
+<!--  <exec_depend>bb2img</exec_depend>-->
+<!--  <exec_depend>li2img</exec_depend>-->
+<!--  <exec_depend>matrixli2img</exec_depend>-->
 
 
 
